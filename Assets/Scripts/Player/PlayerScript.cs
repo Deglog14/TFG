@@ -10,17 +10,33 @@ public class PlayerScript : MonoBehaviour
     [SerializeField]
     Transform playerInputSpace = default;
 
+    [SerializeField, Range(0f, 90f)]
+    float maxAnguloSuelo= 25f;
+
+    [SerializeField, Min(0f)] float aceleracionMax = 10f;
+    [SerializeField, Min(0f)] float aceleracionAireMax = 5f;
+
+
+    float minGroundDotProduct;
+
+    private Vector3 contactNormal;
+
     private int saltoFase;
     private float horizontal;
     private float vertical;
     private Rigidbody rigbody;
     private Vector3 objetivoVelocity, velocidad;
     private bool objetivoSaltar;
-    private bool pisaSuelo;
+
+    private int pisaSueloContador;
+    private bool pisaSuelo => pisaSueloContador > 0;
 
     void Awake()
     {
         rigbody = GetComponent<Rigidbody>();
+        OnValidate();
+        // Aumentar la gravedad global
+        Physics.gravity = new Vector3(0f, -20f, 0f);
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -64,10 +80,8 @@ public class PlayerScript : MonoBehaviour
     private void FixedUpdate()// metodo por si va mal el jeugo te aseguras que cada x frames se ejecuta
     {
         UpdateState();
-        float maxVelocidadCambia = velocidadmax * Time.deltaTime;
-        velocidad.x = Mathf.MoveTowards(velocidad.x, objetivoVelocity.x, maxVelocidadCambia);
-        velocidad.z = Mathf.MoveTowards(velocidad.z, objetivoVelocity.z, maxVelocidadCambia);
-
+        velocidadAjustada();
+        
 
         //JUMP
 
@@ -77,7 +91,8 @@ public class PlayerScript : MonoBehaviour
             Jump();
         }
         rigbody.linearVelocity = velocidad;
-        pisaSuelo = false;
+
+        ClearState();
     }
 
     private void UpdateState()
@@ -86,26 +101,41 @@ public class PlayerScript : MonoBehaviour
         if (pisaSuelo)
         {
             saltoFase = 0;
+            if (pisaSueloContador > 1)
+            {
+                contactNormal.Normalize();
+            }
+        }
+        else
+        {
+            contactNormal = Vector3.up;
         }
     }
 
     private void Jump()
     {
-        if (pisaSuelo|| saltoFase<saltoAireMax)//si pisa el suelo salta
+        if (pisaSuelo || saltoFase < saltoAireMax)
         {
             saltoFase += 1;
-            float velocidadSalto = (float)Math.Sqrt(-2f * Physics.gravity.y * altitudSalto);
-            if (velocidad.y > 0f)
-            {
-                velocidadSalto = velocidadSalto - velocidad.y;
-            }
-            velocidad.y += velocidadSalto;
+
+            float velocidadSalto = Mathf.Sqrt(-2f * Physics.gravity.y * altitudSalto);
+
+            // Cancelar cualquier velocidad vertical antes de saltar
+            velocidad.y = 0f;
+
+            velocidad += contactNormal * velocidadSalto;
         }
     }
+
 
     private void OnCollisionEnter(Collision collision)
     {
         EvaluateCollision(collision);
+    }
+
+    void OnValidate()
+    {
+        minGroundDotProduct = Mathf.Cos(maxAnguloSuelo * Mathf.Deg2Rad);//calcula el angulo maximo en el que el personaje considera suelo
     }
 
     private void OnCollisionStay(Collision collision)
@@ -118,7 +148,43 @@ public class PlayerScript : MonoBehaviour
         for (int i = 0; i < collision.contactCount; i++)
         {
             Vector3 normal = collision.GetContact(i).normal;
-            pisaSuelo |= normal.y >= 0.9f;
+            if (normal.y >= minGroundDotProduct)
+            {
+                pisaSueloContador += 1;
+                contactNormal += normal;
+            }
         }
+    }
+
+
+    private Vector3 ProjectOnContactPlane(Vector3 vector)
+    {
+        return vector - contactNormal * Vector3.Dot(vector, contactNormal);
+    }
+
+    private void velocidadAjustada()
+    {
+        Vector3 xAxis = ProjectOnContactPlane(Vector3.right).normalized;
+        Vector3 zAxis = ProjectOnContactPlane(Vector3.forward).normalized;
+
+        float currentX = Vector3.Dot(velocidad, xAxis);
+        float currentZ = Vector3.Dot(velocidad, zAxis);
+
+        // Elegimos la aceleración adecuada según si estamos en el suelo
+        float aceleracionActual = pisaSuelo ? aceleracionMax : aceleracionAireMax;
+        float maxCambioVelocidad = aceleracionActual * Time.deltaTime;
+
+        // Ajustamos suavemente la velocidad horizontal
+        float newX = Mathf.MoveTowards(velocidad.x, objetivoVelocity.x, maxCambioVelocidad);
+        float newZ = Mathf.MoveTowards(velocidad.z, objetivoVelocity.z, maxCambioVelocidad);
+
+
+        velocidad += xAxis * (newX - currentX) + zAxis * (newZ - currentZ);
+    }
+
+    private void ClearState()
+    {
+        pisaSueloContador = 0;
+        contactNormal = Vector3.zero;
     }
 }

@@ -4023,10 +4023,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9a67a6e5d9a52045a22357b813ef047, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  velocidadmax: 15
-  altitudSalto: 2
+  velocidadmax: 20
+  altitudSalto: 4
   saltoAireMax: 1
   playerInputSpace: {fileID: 2015116770}
+  maxAnguloSuelo: 50
+  aceleracionMax: 20
+  aceleracionAireMax: 5
 --- !u!54 &707383387
 Rigidbody:
   m_ObjectHideFlags: 0

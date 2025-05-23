@@ -51,7 +51,7 @@ public class OrbitCamera : MonoBehaviour
         transform.localRotation = Quaternion.Euler(orbitAngles);
     }
 
-    void LateUpdate()
+    void FixedUpdate()
     {
         UpdateFocusPoint();
         Quaternion lookRotation;
@@ -208,17 +208,7 @@ public class OrbitCamera : MonoBehaviour
         return direction.x < 0f ? 360f - angle : angle;
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+  
 
     
 

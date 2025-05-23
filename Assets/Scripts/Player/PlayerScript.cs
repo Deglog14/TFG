@@ -15,6 +15,8 @@ public class PlayerScript : MonoBehaviour
 
     [SerializeField, Min(0f)] float aceleracionMax = 10f;
     [SerializeField, Min(0f)] float aceleracionAireMax = 5f;
+    public PlayerVida PlayerVida;
+    public PlayerCollect PlayerCollect;
 
 
     float minGroundDotProduct;
@@ -31,12 +33,29 @@ public class PlayerScript : MonoBehaviour
     private int pisaSueloContador;
     private bool pisaSuelo => pisaSueloContador > 0;
 
+    [SerializeField]private SystemRespawn SystemRespawn;
+
+    // Añade estas variables al inicio de tu clase
+    [SerializeField, Range(0f, 1f)]
+    float rotationSmoothness = 0.2f; // Controla la suavidad de la rotación
+
     void Awake()
     {
         rigbody = GetComponent<Rigidbody>();
         OnValidate();
         // Aumentar la gravedad global
         Physics.gravity = new Vector3(0f, -20f, 0f);
+
+        PlayerVida = new PlayerVida();
+        PlayerVida.MeMuero += PlayerVida_MeMuero;
+
+        PlayerCollect = new PlayerCollect();
+
+    }
+
+    private void PlayerVida_MeMuero()
+    {
+        SystemRespawn.Respawn();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -44,6 +63,7 @@ public class PlayerScript : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+ 
     }
 
     // Update is called once per frame
@@ -81,9 +101,23 @@ public class PlayerScript : MonoBehaviour
     {
         UpdateState();
         velocidadAjustada();
-        
 
-        //JUMP
+        // Rotacion basada en movimiento
+        if (velocidad.magnitude > 0.1f) // Solo rotar si nos estamos moviendo
+        {
+            // Ignorar componente Y para la rotación
+            Vector3 horizontalVelocity = new Vector3(velocidad.x, 0f, velocidad.z);
+
+            // Calcular la rotación objetivo
+            Quaternion targetRotation = Quaternion.LookRotation(horizontalVelocity.normalized);
+
+            // Aplicar rotación suavizada
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                rotationSmoothness
+            );
+        }
 
         if (objetivoSaltar)
         {
@@ -187,4 +221,47 @@ public class PlayerScript : MonoBehaviour
         pisaSueloContador = 0;
         contactNormal = Vector3.zero;
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("PuntoControl"))
+        {
+           SystemRespawn.posPuntoControl = other.gameObject.transform.position; 
+        }
+        if (other.gameObject.CompareTag("Cacahuete"))
+        {
+            AudioController.instancia.SonidoCacahuete();
+            PlayerCollect.Recoger(1, "Cacahuete");
+            Destroy(other.gameObject);
+        }
+        if (other.gameObject.CompareTag("LLaves"))
+        {
+            PlayerCollect.Recoger(1, "LLaves");
+            Destroy(other.gameObject);
+        }
+        if (other.gameObject.CompareTag("Muerte"))
+        {
+            PlayerVida.PerderVida();
+        }
+    }
+
+    [ContextMenu("TestVidas")]
+    public void TestVidas()
+    {
+        PlayerVida.PerderVida();
+    }
+
+    [ContextMenu("TestCorazones")]
+    public void TestCorazones()
+    {
+        PlayerVida.RecibirDaño(1);
+    }
+
+    [ContextMenu("TestCurar")]
+    public void TestCurar()
+    {
+        PlayerVida.Curar(1);
+    }
+
+   
 }

@@ -87,7 +87,8 @@ public class OrbitCamera : MonoBehaviour
         transform.SetPositionAndRotation(lookPosition, lookRotation);
 
     }
-
+    
+    // Calcula la mitad del tamaño del rectángulo de la cámara para la detección de colisiones
     Vector3 CameraHalfExtends
     {
         get
@@ -152,7 +153,7 @@ public class OrbitCamera : MonoBehaviour
         }
     }
 
-    //solo funciona con mouse
+    //solo funciona con raton
     bool ManualRotation()
     {
         Vector2 input = new Vector2(

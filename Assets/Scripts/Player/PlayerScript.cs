@@ -35,7 +35,7 @@ public class PlayerScript : MonoBehaviour
 
     [SerializeField]private SystemRespawn SystemRespawn;
 
-    // Añade estas variables al inicio de tu clase
+    
     [SerializeField, Range(0f, 1f)]
     float rotationSmoothness = 0.2f; // Controla la suavidad de la rotación
 

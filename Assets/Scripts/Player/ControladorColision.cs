@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerScript))] // Asegura que hay un PlayerScript
 public class ControladorColision : MonoBehaviour
 {
-    [SerializeField] private int volando;
+    [SerializeField] private int volando; // fuerza de retroceso.
     private void OnCollisionEnter(Collision collision)
     {
         // Solo reaccionamos a objetos con tag "Enemi"

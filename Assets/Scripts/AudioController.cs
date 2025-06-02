@@ -19,7 +19,7 @@ public class AudioController : MonoBehaviour
         if (instancia == null)
         {
             instancia = this;
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject); // para no destruir el objeto al cambiar de escena
 
             audioSource = gameObject.AddComponent<AudioSource>();
 

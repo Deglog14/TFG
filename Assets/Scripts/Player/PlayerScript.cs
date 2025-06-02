@@ -69,19 +69,19 @@ public class PlayerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        horizontal = Input.GetAxis("Horizontal");
-        vertical = Input.GetAxis("Vertical");
+        horizontal = Input.GetAxis("Horizontal"); // Valor entre -1 (izq) y 1 (der)
+        vertical = Input.GetAxis("Vertical"); // Valor entre -1 (atrás) y 1 (adelante)
         objetivoSaltar |= Input.GetButtonDown("Jump") ;
 
         if (playerInputSpace)
         {
-            Vector3 forward = playerInputSpace.forward;
-            forward.y = 0f;
-            forward.Normalize();
-            Vector3 right = playerInputSpace.right;
+            Vector3 forward = playerInputSpace.forward;// Dirección "adelante" de la cámara
+            forward.y = 0f;                             // Ignorar inclinación vertical
+            forward.Normalize();                        // Normalizar para mantener velocidad constante
+            Vector3 right = playerInputSpace.right;     // Dirección "derecha" de la cámara
             right.y = 0f;
             right.Normalize();
-            objetivoVelocity = (forward * vertical + right  * horizontal) * velocidadmax;
+            objetivoVelocity = (forward * vertical + right  * horizontal) * velocidadmax;//objetivo de la velocidad
         }
         else
         {
@@ -99,8 +99,8 @@ public class PlayerScript : MonoBehaviour
 
     private void FixedUpdate()// metodo por si va mal el jeugo te aseguras que cada x frames se ejecuta
     {
-        UpdateState();
-        velocidadAjustada();
+        UpdateState();// Actualiza contacto con suelo
+        velocidadAjustada();// Ajusta la velocidad
 
         // Rotacion basada en movimiento
         if (velocidad.magnitude > 0.1f) // Solo rotar si nos estamos moviendo
@@ -118,15 +118,16 @@ public class PlayerScript : MonoBehaviour
                 rotationSmoothness
             );
         }
-
+        //maneja el salto
         if (objetivoSaltar)
         {
             objetivoSaltar = false;
             Jump();
         }
+        //Aplica velocidad 
         rigbody.linearVelocity = velocidad;
 
-        ClearState();
+        ClearState();  // Prepara el siguiente frame
     }
 
     private void UpdateState()
@@ -134,15 +135,15 @@ public class PlayerScript : MonoBehaviour
         velocidad = rigbody.linearVelocity;//utilizamos el rigbody para movernso ahora
         if (pisaSuelo)
         {
-            saltoFase = 0;
+            saltoFase = 0;//Reinicia Fase de salto no esta en el aire
             if (pisaSueloContador > 1)
             {
-                contactNormal.Normalize();
+                contactNormal.Normalize();//Normaliza el vector de contacto para mantener magnitud unitaria
             }
         }
-        else
+        else//objeto en el aire
         {
-            contactNormal = Vector3.up;
+            contactNormal = Vector3.up;//normal hacia arriba
         }
     }
 
@@ -169,7 +170,7 @@ public class PlayerScript : MonoBehaviour
 
     void OnValidate()
     {
-        minGroundDotProduct = Mathf.Cos(maxAnguloSuelo * Mathf.Deg2Rad);//calcula el angulo maximo en el que el personaje considera suelo
+        minGroundDotProduct = Mathf.Cos(maxAnguloSuelo * Mathf.Deg2Rad);//calcula el angulo maximo en el que el personaje considera suelo,pendiente
     }
 
     private void OnCollisionStay(Collision collision)
@@ -201,6 +202,7 @@ public class PlayerScript : MonoBehaviour
         Vector3 xAxis = ProjectOnContactPlane(Vector3.right).normalized;
         Vector3 zAxis = ProjectOnContactPlane(Vector3.forward).normalized;
 
+        // velocidad ya está alineada con los ejes proyectados.
         float currentX = Vector3.Dot(velocidad, xAxis);
         float currentZ = Vector3.Dot(velocidad, zAxis);
 
@@ -230,7 +232,7 @@ public class PlayerScript : MonoBehaviour
         }
         if (other.gameObject.CompareTag("Cacahuete"))
         {
-            AudioController.instancia.SonidoCacahuete();
+            AudioController.instancia.SonidoCacahuete();//singelton
             PlayerCollect.Recoger(1, "Cacahuete");
             Destroy(other.gameObject);
         }
